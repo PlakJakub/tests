@@ -1,6 +1,27 @@
 let activeStream: MediaStream | null = null;
 let cameraRequestGeneration = 0;
 
+function waitForVideoFrame(video: HTMLVideoElement): Promise<void> {
+  if (video.requestVideoFrameCallback) {
+    return new Promise<void>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        reject(new Error("Kamera nie dostarczyła obrazu na czas."));
+      }, 10_000);
+
+      video.requestVideoFrameCallback(() => {
+        window.clearTimeout(timeoutId);
+        resolve();
+      });
+    });
+  }
+
+  return new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 export async function startCamera(video: HTMLVideoElement): Promise<void> {
   if (!window.isSecureContext) {
     throw new Error("Kamera wymaga połączenia HTTPS. Wyjątkiem jest localhost.");
@@ -32,6 +53,10 @@ export async function startCamera(video: HTMLVideoElement): Promise<void> {
 
   try {
     await video.play();
+    await waitForVideoFrame(video);
+    if (requestId !== cameraRequestGeneration) {
+      return;
+    }
   } catch (error) {
     if (requestId === cameraRequestGeneration) {
       stopCamera(video);

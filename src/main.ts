@@ -57,6 +57,10 @@ function cameraErrorMessage(error: unknown): string {
     return error.message;
   }
 
+  if (error instanceof Error && error.message.startsWith("Kamera nie dostarczyła")) {
+    return "Nie udało się odebrać obrazu z kamery. Zamknij inne aplikacje korzystające z kamery i spróbuj ponownie.";
+  }
+
   if (error instanceof DOMException) {
     switch (error.name) {
       case "NotAllowedError":
