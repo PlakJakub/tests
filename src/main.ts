@@ -9,7 +9,6 @@ const MOVE_CANCEL_DISTANCE = 10;
 
 const clockScreen = getElement<HTMLElement>("clock-screen");
 const clockElement = getElement<HTMLTimeElement>("clock");
-const clockBackground = getElement<HTMLImageElement>("clock-background");
 const clockError = getElement<HTMLParagraphElement>("clock-error");
 const cameraScreen = getElement<HTMLElement>("camera-screen");
 const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
@@ -175,8 +174,7 @@ takePhotoButton.addEventListener("click", async () => {
       URL.revokeObjectURL(capturedPhotoUrl);
     }
     capturedPhotoUrl = URL.createObjectURL(photo);
-    clockBackground.src = capturedPhotoUrl;
-    clockBackground.hidden = false;
+    clockScreen.style.setProperty("--clock-background-image", `url("${capturedPhotoUrl}")`);
     stopCamera(cameraPreview);
     setState("clock");
   } catch (error) {

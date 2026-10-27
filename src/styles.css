@@ -51,6 +51,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image:
+    linear-gradient(rgb(0 0 0 / 45%), rgb(0 0 0 / 45%)),
+    var(--clock-background-image, none);
+  background-position: center;
+  background-size: cover;
+  -webkit-touch-callout: none;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -66,20 +72,6 @@ body {
   font-weight: 300;
   line-height: 1;
   letter-spacing: 0.02em;
-}
-
-.clock-background {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.55);
-  pointer-events: none;
-}
-
-.clock-background[hidden] {
-  display: none;
 }
 
 .camera-screen {
