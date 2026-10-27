@@ -184,7 +184,7 @@ returnToClockButton.addEventListener("click", returnToClock);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error: unknown) => {
       console.error("Nie udało się zarejestrować service workera:", error);
     });
   });

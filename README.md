@@ -32,6 +32,17 @@ npm run preview
 
 Kamera wymaga bezpiecznego kontekstu: HTTPS albo `localhost`. Adres serwera deweloperskiego dostępny w telefonie przez zwykłe HTTP w sieci lokalnej nie umożliwi użycia kamery. Do testów na urządzeniu użyj hostingu HTTPS lub lokalnego serwera HTTPS.
 
+## Publikacja na GitHub Pages
+
+Workflow GitHub Actions automatycznie buduje aplikację i publikuje ją na GitHub Pages po każdym pushu do gałęzi `main`.
+
+1. W repozytorium GitHub otwórz **Settings → Pages**.
+2. W sekcji **Build and deployment** ustaw **Source** na **GitHub Actions**.
+3. Wypchnij zmiany do gałęzi `main` i poczekaj na zakończenie workflow **Deploy to GitHub Pages** w zakładce **Actions**.
+4. Aplikacja będzie dostępna pod adresem `https://plakjakub.github.io/tests/`.
+
+GitHub Pages zapewnia HTTPS, więc po otwarciu strony w przeglądarce można udzielić jej dostępu do kamery. GitHub Pages hostuje pliki statyczne; jeśli aplikacja ma kiedyś wysyłać zdjęcia, potrzebny będzie osobny backend/API. Obecnie zdjęcia nie są wysyłane automatycznie.
+
 ## Sterowanie i zdjęcie
 
 - Przytrzymaj ekran zegara przez 700 ms, nie przesuwając palca, aby otworzyć podgląd tylnej kamery.

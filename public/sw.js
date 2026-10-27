@@ -1,5 +1,11 @@
-const CACHE_NAME = "camera-pwa-v1";
-const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon.svg"];
+const CACHE_NAME = "camera-pwa-v2";
+const APP_BASE_PATH = new URL(self.registration.scope).pathname;
+const APP_SHELL_PATHS = new Set(
+  ["", "index.html", "manifest.webmanifest", "icons/icon.svg"].map(
+    (path) => new URL(path, self.registration.scope).pathname,
+  ),
+);
+const APP_SHELL = [...APP_SHELL_PATHS];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -24,19 +30,15 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
-  const isAppShell =
-    url.pathname === "/" ||
-    url.pathname === "/index.html" ||
-    url.pathname === "/manifest.webmanifest" ||
-    url.pathname === "/icons/icon.svg";
+  const isAppShell = APP_SHELL_PATHS.has(url.pathname);
   const isBuiltCode =
-    url.pathname.startsWith("/assets/") &&
+    url.pathname.startsWith(`${APP_BASE_PATH}assets/`) &&
     (request.destination === "script" || request.destination === "style");
 
   if (
     request.method !== "GET" ||
     url.origin !== self.location.origin ||
-    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith(`${APP_BASE_PATH}api/`) ||
     (!isAppShell && !isBuiltCode)
   ) {
     return;
