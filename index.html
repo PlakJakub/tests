@@ -17,6 +17,7 @@
   <body>
     <main id="app">
       <section id="clock-screen" class="screen clock-screen" aria-label="Zegar">
+        <img id="clock-background" class="clock-background" alt="" aria-hidden="true" hidden />
         <time id="clock" class="clock" aria-live="off">00:00</time>
         <p id="clock-error" class="message" role="alert" hidden></p>
       </section>
@@ -30,10 +31,6 @@
         </div>
       </section>
 
-      <section id="photo-screen" class="screen photo-screen" aria-label="Zdjęcie" hidden>
-        <p class="photo-ready">Zdjęcie gotowe</p>
-        <button id="return-to-clock" class="button" type="button">POWRÓT</button>
-      </section>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

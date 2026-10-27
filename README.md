@@ -46,10 +46,10 @@ GitHub Pages zapewnia HTTPS, więc po otwarciu strony w przeglądarce można udz
 ## Sterowanie i zdjęcie
 
 - Przytrzymaj ekran zegara przez 700 ms, nie przesuwając palca, aby otworzyć podgląd tylnej kamery.
-- Naciśnij **ZRÓB ZDJĘCIE**, aby utworzyć JPEG o jakości 0.9. Strumień kamery jest wtedy zatrzymywany.
-- **POWRÓT** zamyka widok aparatu lub gotowego zdjęcia i wraca do zegara.
+- Naciśnij **ZRÓB ZDJĘCIE**, aby utworzyć JPEG o jakości 0.9. Strumień kamery jest wtedy zatrzymywany, a zdjęcie zostaje tymczasowo wyświetlone jako tło zegara.
+- **POWRÓT** zamyka aparat i wraca do zegara.
 
-`uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia zdjęcie z pamięci po przejściu do stanu gotowego. Adres serwera można zmienić w jednym miejscu, w stałej `API_URL`. Funkcja uploadu nie jest wywoływana automatycznie.
+`uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia ostatnie zdjęcie z pamięci. Tymczasowe wyświetlanie zdjęcia jako tła służy wyłącznie do testów i można je usunąć po sprawdzeniu; funkcja uploadu nie jest wywoływana automatycznie.
 
 ## PWA i Capacitor
 

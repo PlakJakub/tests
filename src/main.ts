@@ -2,26 +2,26 @@ import { startCamera, stopCamera, takePhoto } from "./camera";
 import { startClock } from "./clock";
 import "./styles.css";
 
-type AppState = "clock" | "camera" | "photo-ready";
+type AppState = "clock" | "camera";
 
 const LONG_PRESS_MS = 700;
 const MOVE_CANCEL_DISTANCE = 10;
 
 const clockScreen = getElement<HTMLElement>("clock-screen");
 const clockElement = getElement<HTMLTimeElement>("clock");
+const clockBackground = getElement<HTMLImageElement>("clock-background");
 const clockError = getElement<HTMLParagraphElement>("clock-error");
 const cameraScreen = getElement<HTMLElement>("camera-screen");
 const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
 const cameraError = getElement<HTMLParagraphElement>("camera-error");
-const photoScreen = getElement<HTMLElement>("photo-screen");
 const takePhotoButton = getElement<HTMLButtonElement>("take-photo");
 const cancelCameraButton = getElement<HTMLButtonElement>("cancel-camera");
-const returnToClockButton = getElement<HTMLButtonElement>("return-to-clock");
 
 let state: AppState = "clock";
 let longPressTimer: number | undefined;
 let pointerStart: { x: number; y: number } | undefined;
 let capturedPhoto: Blob | null = null;
+let capturedPhotoUrl: string | null = null;
 let cameraRequestId = 0;
 
 startClock(clockElement);
@@ -42,7 +42,6 @@ function setState(nextState: AppState): void {
   state = nextState;
   clockScreen.hidden = state !== "clock";
   cameraScreen.hidden = state !== "camera";
-  photoScreen.hidden = state !== "photo-ready";
 }
 
 function clearLongPress(): void {
@@ -114,7 +113,6 @@ function returnToClock(): void {
   cameraRequestId += 1;
   clearLongPress();
   stopCamera(cameraPreview);
-  capturedPhoto = null;
   cameraError.hidden = true;
   clockError.hidden = true;
   takePhotoButton.disabled = false;
@@ -165,8 +163,14 @@ takePhotoButton.addEventListener("click", async () => {
       return;
     }
     capturedPhoto = photo;
+    if (capturedPhotoUrl) {
+      URL.revokeObjectURL(capturedPhotoUrl);
+    }
+    capturedPhotoUrl = URL.createObjectURL(photo);
+    clockBackground.src = capturedPhotoUrl;
+    clockBackground.hidden = false;
     stopCamera(cameraPreview);
-    setState("photo-ready");
+    setState("clock");
   } catch (error) {
     console.error("Nie udało się wykonać zdjęcia:", error);
     if (state !== "camera") {
@@ -180,7 +184,6 @@ takePhotoButton.addEventListener("click", async () => {
 });
 
 cancelCameraButton.addEventListener("click", returnToClock);
-returnToClockButton.addEventListener("click", returnToClock);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

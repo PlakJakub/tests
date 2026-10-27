@@ -57,12 +57,28 @@ body {
 }
 
 .clock {
+  position: relative;
+  z-index: 1;
   color: #fff;
+  text-shadow: 0 2px 18px rgb(0 0 0 / 75%);
   font-size: clamp(5rem, 24vw, 11rem);
   font-variant-numeric: tabular-nums;
   font-weight: 300;
   line-height: 1;
   letter-spacing: 0.02em;
+}
+
+.clock-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55);
+}
+
+.clock-background[hidden] {
+  display: none;
 }
 
 .camera-screen {
@@ -133,14 +149,4 @@ body {
   padding: 0.75rem;
   border-radius: 0.25rem;
   background: rgb(0 0 0 / 75%);
-}
-
-.photo-screen {
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.photo-ready {
-  margin: 0;
-  font-size: 1.1rem;
 }
