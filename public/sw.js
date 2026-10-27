@@ -1,4 +1,4 @@
-const CACHE_NAME = "camera-pwa-v3";
+const CACHE_NAME = "camera-pwa-v4";
 const APP_BASE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL_PATHS = new Set(
   ["", "index.html", "manifest.webmanifest", "icons/icon.svg"].map(
