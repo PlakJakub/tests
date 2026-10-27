@@ -75,6 +75,7 @@ body {
   height: 100%;
   object-fit: cover;
   filter: brightness(0.55);
+  pointer-events: none;
 }
 
 .clock-background[hidden] {

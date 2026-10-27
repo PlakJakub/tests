@@ -137,6 +137,10 @@ clockScreen.addEventListener("pointerdown", (event: PointerEvent) => {
   }, LONG_PRESS_MS);
 });
 
+clockScreen.addEventListener("contextmenu", (event: MouseEvent) => {
+  event.preventDefault();
+});
+
 clockScreen.addEventListener("pointerup", clearLongPress);
 clockScreen.addEventListener("pointercancel", clearLongPress);
 clockScreen.addEventListener("lostpointercapture", clearLongPress);
