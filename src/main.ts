@@ -66,6 +66,20 @@ function displayAnswers(answers: AnswerMap): void {
   resultsList.hidden = false;
 }
 
+async function showAnswersNotification(answers: AnswerMap): Promise<void> {
+  const registration = await navigator.serviceWorker.ready;
+  const icon = `${import.meta.env.BASE_URL}icons/icon.svg`;
+  const body = Object.entries(answers)
+    .map(([question, answer]) => `${question}: ${answer}`)
+    .join("\n");
+
+  await registration.showNotification("Odpowiedzi", {
+    body,
+    icon,
+    badge: icon,
+  });
+}
+
 function clearLongPress(): void {
   if (longPressTimer !== undefined) {
     window.clearTimeout(longPressTimer);
@@ -187,7 +201,28 @@ takePhotoButton.addEventListener("click", async () => {
 
   takePhotoButton.disabled = true;
   cameraError.hidden = true;
+  let notificationPermission: NotificationPermission | null = null;
+  let notificationError: string | null = null;
+
+  if ("Notification" in window) {
+    try {
+      notificationPermission = Notification.permission;
+      if (notificationPermission === "default") {
+        notificationPermission = await Notification.requestPermission();
+      }
+    } catch (error) {
+      console.error("Nie udało się uzyskać zgody na powiadomienia:", error);
+      notificationError = "Nie udało się uzyskać zgody na powiadomienia.";
+    }
+  } else {
+    notificationError = "Ta przeglądarka nie obsługuje powiadomień.";
+  }
+
   try {
+    if (state !== "camera") {
+      return;
+    }
+
     const photo = await takePhoto(cameraPreview);
     if (state !== "camera") {
       return;
@@ -201,6 +236,22 @@ takePhotoButton.addEventListener("click", async () => {
     // answers = (await response.json()) as AnswerMap;
     displayAnswers(answers);
     setState("clock");
+
+    if (!notificationError && notificationPermission !== "granted") {
+      notificationError = "Zezwól na powiadomienia w ustawieniach przeglądarki, aby otrzymywać wyniki na telefonie.";
+    }
+    if (!notificationError) {
+      try {
+        await showAnswersNotification(answers);
+      } catch (error) {
+        console.error("Nie udało się wysłać powiadomienia z odpowiedziami:", error);
+        notificationError = "Nie udało się wyświetlić powiadomienia z odpowiedziami.";
+      }
+    }
+    if (notificationError) {
+      clockError.textContent = notificationError;
+      clockError.hidden = false;
+    }
   } catch (error) {
     console.error("Nie udało się wykonać zdjęcia:", error);
     if (state !== "camera") {

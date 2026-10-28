@@ -50,6 +50,7 @@ GitHub Pages zapewnia HTTPS, więc po otwarciu strony w przeglądarce można udz
 - **POWRÓT** zamyka aparat i wraca do zegara.
 
 Po wyświetleniu odpowiedzi przytrzymaj ekran zegara przez 700 ms, aby ponownie otworzyć aparat. Lista odpowiedzi mieści się na ekranie bez przewijania. `uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia ostatnie zdjęcie z pamięci.
+Po zrobieniu zdjęcia aplikacja wyświetla powiadomienie systemowe z odpowiedziami. Przy pierwszym użyciu zezwól przeglądarce na powiadomienia. Aby otrzymać je również na zegarku, włącz przekazywanie powiadomień z telefonu w ustawieniach sparowanego zegarka.
 
 ## PWA i Capacitor
 
