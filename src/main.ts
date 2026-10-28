@@ -2,7 +2,8 @@ import { startCamera, stopCamera, takePhoto } from "./camera";
 import { startClock } from "./clock";
 import "./styles.css";
 
-type AppState = "clock" | "camera";
+type AppState = "clock" | "camera" | "results";
+type AnswerMap = Record<number, string>;
 
 const LONG_PRESS_MS = 700;
 const MOVE_CANCEL_DISTANCE = 10;
@@ -15,12 +16,14 @@ const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
 const cameraError = getElement<HTMLParagraphElement>("camera-error");
 const takePhotoButton = getElement<HTMLButtonElement>("take-photo");
 const cancelCameraButton = getElement<HTMLButtonElement>("cancel-camera");
+const resultsScreen = getElement<HTMLElement>("results-screen");
+const resultsList = getElement<HTMLOListElement>("results-list");
+const returnToClockButton = getElement<HTMLButtonElement>("return-to-clock");
 
 let state: AppState = "clock";
 let longPressTimer: number | undefined;
 let pointerStart: { x: number; y: number } | undefined;
 let capturedPhoto: Blob | null = null;
-let capturedPhotoUrl: string | null = null;
 let cameraRequestId = 0;
 
 startClock(clockElement);
@@ -41,6 +44,28 @@ function setState(nextState: AppState): void {
   state = nextState;
   clockScreen.hidden = state !== "clock";
   cameraScreen.hidden = state !== "camera";
+  resultsScreen.hidden = state !== "results";
+}
+
+function getSimulatedApiResponse(): AnswerMap {
+  const answers: AnswerMap = {};
+  const answerCycle = ["c", "b", "d"];
+
+  for (let question = 1; question <= 25; question += 1) {
+    answers[question] = answerCycle[(question - 1) % answerCycle.length];
+  }
+
+  return answers;
+}
+
+function displayAnswers(answers: AnswerMap): void {
+  const rows = Object.entries(answers).map(([question, answer]) => {
+    const row = document.createElement("li");
+    row.textContent = `${question}: ${answer}`;
+    return row;
+  });
+
+  resultsList.replaceChildren(...rows);
 }
 
 function clearLongPress(): void {
@@ -170,13 +195,14 @@ takePhotoButton.addEventListener("click", async () => {
       return;
     }
     capturedPhoto = photo;
-    if (capturedPhotoUrl) {
-      URL.revokeObjectURL(capturedPhotoUrl);
-    }
-    capturedPhotoUrl = URL.createObjectURL(photo);
-    clockScreen.style.setProperty("--clock-background-image", `url("${capturedPhotoUrl}")`);
     stopCamera(cameraPreview);
-    setState("clock");
+
+    // import { uploadPhoto } from "./api";
+    let answers = getSimulatedApiResponse();
+    // const response = await uploadPhoto(photo);
+    // answers = (await response.json()) as AnswerMap;
+    displayAnswers(answers);
+    setState("results");
   } catch (error) {
     console.error("Nie udało się wykonać zdjęcia:", error);
     if (state !== "camera") {
@@ -190,6 +216,7 @@ takePhotoButton.addEventListener("click", async () => {
 });
 
 cancelCameraButton.addEventListener("click", returnToClock);
+returnToClockButton.addEventListener("click", returnToClock);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

@@ -46,16 +46,10 @@ body {
   display: none;
 }
 
-.clock-screen,
-.photo-screen {
+.clock-screen {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image:
-    linear-gradient(rgb(0 0 0 / 45%), rgb(0 0 0 / 45%)),
-    var(--clock-background-image, none);
-  background-position: center;
-  background-size: cover;
   -webkit-touch-callout: none;
   touch-action: none;
   user-select: none;
@@ -142,4 +136,29 @@ body {
   padding: 0.75rem;
   border-radius: 0.25rem;
   background: rgb(0 0 0 / 75%);
+}
+
+.results-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(6rem, calc(env(safe-area-inset-bottom) + 5rem));
+}
+
+.results-list {
+  margin: 0;
+  padding: 0;
+  color: rgb(160 160 160 / 28%);
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  line-height: 1.35;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-return {
+  position: fixed;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: max(1.25rem, env(safe-area-inset-left));
 }

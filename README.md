@@ -1,6 +1,6 @@
 # Camera PWA
 
-Minimalistyczna aplikacja PWA z zegarem i aparatem. Cała logika działa w przeglądarce; zdjęcie pozostaje w pamięci jako `Blob` i nie jest wysyłane automatycznie.
+Minimalistyczna aplikacja PWA z zegarem i aparatem. Zdjęcie pozostaje w pamięci jako `Blob`; wysyłka do API jest przygotowana, ale obecnie wyłączona.
 
 ## Wymagania
 
@@ -41,15 +41,15 @@ Workflow GitHub Actions automatycznie buduje aplikację i publikuje ją na GitHu
 3. Wypchnij zmiany do gałęzi `main` i poczekaj na zakończenie workflow **Deploy to GitHub Pages** w zakładce **Actions**.
 4. Aplikacja będzie dostępna pod adresem `https://plakjakub.github.io/tests/`.
 
-GitHub Pages zapewnia HTTPS, więc po otwarciu strony w przeglądarce można udzielić jej dostępu do kamery. GitHub Pages hostuje pliki statyczne; jeśli aplikacja ma kiedyś wysyłać zdjęcia, potrzebny będzie osobny backend/API. Obecnie zdjęcia nie są wysyłane automatycznie.
+GitHub Pages zapewnia HTTPS, więc po otwarciu strony w przeglądarce można udzielić jej dostępu do kamery. GitHub Pages hostuje pliki statyczne; do rzeczywistej wysyłki zdjęć potrzebny będzie osobny backend/API.
 
 ## Sterowanie i zdjęcie
 
 - Przytrzymaj ekran zegara przez 700 ms, nie przesuwając palca, aby otworzyć podgląd tylnej kamery.
-- Naciśnij **ZRÓB ZDJĘCIE**, aby utworzyć JPEG o jakości 0.9. Strumień kamery jest wtedy zatrzymywany, a zdjęcie zostaje tymczasowo wyświetlone jako tło zegara.
+- Naciśnij **ZRÓB ZDJĘCIE**, aby utworzyć JPEG o jakości 0.9. Strumień kamery jest wtedy zatrzymywany, a ekran wyników wyświetla 25 symulowanych odpowiedzi API na czarnym tle. Rzeczywiste wywołanie `uploadPhoto(photo)` znajduje się w `src/main.ts` w komentarzu.
 - **POWRÓT** zamyka aparat i wraca do zegara.
 
-`uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia ostatnie zdjęcie z pamięci. Tymczasowe wyświetlanie zdjęcia jako tła służy wyłącznie do testów i można je usunąć po sprawdzeniu; funkcja uploadu nie jest wywoływana automatycznie.
+`uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia ostatnie zdjęcie z pamięci. Na ekran wyników można wrócić przyciskiem **WRÓĆ DO ZEGARA**.
 
 ## PWA i Capacitor
 
