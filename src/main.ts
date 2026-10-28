@@ -2,7 +2,7 @@ import { startCamera, stopCamera, takePhoto } from "./camera";
 import { startClock } from "./clock";
 import "./styles.css";
 
-type AppState = "clock" | "camera" | "results";
+type AppState = "clock" | "camera";
 type AnswerMap = Record<number, string>;
 
 const LONG_PRESS_MS = 700;
@@ -16,9 +16,8 @@ const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
 const cameraError = getElement<HTMLParagraphElement>("camera-error");
 const takePhotoButton = getElement<HTMLButtonElement>("take-photo");
 const cancelCameraButton = getElement<HTMLButtonElement>("cancel-camera");
-const resultsScreen = getElement<HTMLElement>("results-screen");
 const resultsList = getElement<HTMLOListElement>("results-list");
-const returnToClockButton = getElement<HTMLButtonElement>("return-to-clock");
+const retakePhotoButton = getElement<HTMLButtonElement>("retake-photo");
 
 let state: AppState = "clock";
 let longPressTimer: number | undefined;
@@ -44,7 +43,6 @@ function setState(nextState: AppState): void {
   state = nextState;
   clockScreen.hidden = state !== "clock";
   cameraScreen.hidden = state !== "camera";
-  resultsScreen.hidden = state !== "results";
 }
 
 function getSimulatedApiResponse(): AnswerMap {
@@ -66,6 +64,9 @@ function displayAnswers(answers: AnswerMap): void {
   });
 
   resultsList.replaceChildren(...rows);
+  resultsList.hidden = false;
+  retakePhotoButton.hidden = false;
+  clockScreen.classList.add("has-results");
 }
 
 function clearLongPress(): void {
@@ -202,7 +203,7 @@ takePhotoButton.addEventListener("click", async () => {
     // const response = await uploadPhoto(photo);
     // answers = (await response.json()) as AnswerMap;
     displayAnswers(answers);
-    setState("results");
+    setState("clock");
   } catch (error) {
     console.error("Nie udało się wykonać zdjęcia:", error);
     if (state !== "camera") {
@@ -216,7 +217,12 @@ takePhotoButton.addEventListener("click", async () => {
 });
 
 cancelCameraButton.addEventListener("click", returnToClock);
-returnToClockButton.addEventListener("click", returnToClock);
+retakePhotoButton.addEventListener("pointerdown", (event: PointerEvent) => {
+  event.stopPropagation();
+});
+retakePhotoButton.addEventListener("click", () => {
+  void openCamera();
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
