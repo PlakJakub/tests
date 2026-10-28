@@ -17,7 +17,6 @@ const cameraError = getElement<HTMLParagraphElement>("camera-error");
 const takePhotoButton = getElement<HTMLButtonElement>("take-photo");
 const cancelCameraButton = getElement<HTMLButtonElement>("cancel-camera");
 const resultsList = getElement<HTMLOListElement>("results-list");
-const retakePhotoButton = getElement<HTMLButtonElement>("retake-photo");
 
 let state: AppState = "clock";
 let longPressTimer: number | undefined;
@@ -65,8 +64,6 @@ function displayAnswers(answers: AnswerMap): void {
 
   resultsList.replaceChildren(...rows);
   resultsList.hidden = false;
-  retakePhotoButton.hidden = false;
-  clockScreen.classList.add("has-results");
 }
 
 function clearLongPress(): void {
@@ -217,12 +214,6 @@ takePhotoButton.addEventListener("click", async () => {
 });
 
 cancelCameraButton.addEventListener("click", returnToClock);
-retakePhotoButton.addEventListener("pointerdown", (event: PointerEvent) => {
-  event.stopPropagation();
-});
-retakePhotoButton.addEventListener("click", () => {
-  void openCamera();
-});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

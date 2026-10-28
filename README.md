@@ -49,7 +49,7 @@ GitHub Pages zapewnia HTTPS, więc po otwarciu strony w przeglądarce można udz
 - Naciśnij **ZRÓB ZDJĘCIE**, aby utworzyć JPEG o jakości 0.9. Strumień kamery jest wtedy zatrzymywany, a 25 symulowanych odpowiedzi API pojawia się po lewej stronie zegara. Rzeczywiste wywołanie `uploadPhoto(photo)` znajduje się w `src/main.ts` w komentarzu.
 - **POWRÓT** zamyka aparat i wraca do zegara.
 
-Po wyświetleniu odpowiedzi przycisk **ZRÓB PONOWNIE ZDJĘCIE** otwiera aparat ponownie. `uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia ostatnie zdjęcie z pamięci.
+Po wyświetleniu odpowiedzi przytrzymaj ekran zegara przez 700 ms, aby ponownie otworzyć aparat. Lista odpowiedzi mieści się na ekranie bez przewijania. `uploadPhoto(photo: Blob)` znajduje się w `src/api.ts`, a `getCapturedPhoto()` udostępnia ostatnie zdjęcie z pamięci.
 
 ## PWA i Capacitor
 

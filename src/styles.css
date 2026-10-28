@@ -68,34 +68,21 @@ body {
   letter-spacing: 0.02em;
 }
 
-.clock-screen.has-results .clock {
-  transform: translateX(clamp(2rem, 10vw, 8rem));
-}
-
 .results-list {
   position: absolute;
   top: 50%;
   left: max(1rem, env(safe-area-inset-left));
   z-index: 2;
   width: clamp(4rem, 16vw, 7rem);
-  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
   margin: 0;
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   color: rgb(160 160 160 / 12%);
-  font-size: clamp(0.85rem, 3.5vw, 1.1rem);
-  line-height: 1.25;
+  font-size: min(0.95rem, 3.2vw, calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem) / 32));
+  line-height: 1.12;
   list-style: none;
   font-variant-numeric: tabular-nums;
   transform: translateY(-50%);
-}
-
-.results-return {
-  position: absolute;
-  right: max(1.25rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  left: max(1.25rem, env(safe-area-inset-left));
-  z-index: 3;
 }
 
 .camera-screen {
