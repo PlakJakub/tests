@@ -1,28 +1,72 @@
 import { startCamera, stopCamera, takePhoto } from "./camera";
 import { startClock } from "./clock";
+import { loadStoredQuestions, processImage, solvePendingQuestions } from "./questionStore";
+import { initializeApiKey, saveApiKey } from "./api";
+import type { StoredQuestion } from "../shared/types";
 import "./styles.css";
 
-type AppState = "clock" | "camera";
-type AnswerMap = Record<number, string>;
+type AppState = "clock" | "camera" | "results";
 
 const LONG_PRESS_MS = 700;
 const MOVE_CANCEL_DISTANCE = 10;
 
 const clockScreen = getElement<HTMLElement>("clock-screen");
 const clockElement = getElement<HTMLTimeElement>("clock");
-const clockError = getElement<HTMLParagraphElement>("clock-error");
 const cameraScreen = getElement<HTMLElement>("camera-screen");
+const resultsScreen = getElement<HTMLElement>("results-screen");
 const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
-const cameraError = getElement<HTMLParagraphElement>("camera-error");
 const takePhotoButton = getElement<HTMLButtonElement>("take-photo");
 const cancelCameraButton = getElement<HTMLButtonElement>("cancel-camera");
-const resultsList = getElement<HTMLOListElement>("results-list");
+const apiKeyDialog = getElement<HTMLDialogElement>("api-key-dialog");
+const apiKeyForm = getElement<HTMLFormElement>("api-key-form");
+const apiKeyInput = getElement<HTMLInputElement>("api-key-input");
+const resultsList = getElement<HTMLOListElement>("extracted-questions");
+const processingStatus = getElement<HTMLParagraphElement>("processing-status");
+const returnFromResultsButton = getElement<HTMLButtonElement>("return-from-results");
+const addPhotoButton = getElement<HTMLButtonElement>("add-photo");
+
+type DisplayedQuestion = {
+  id: number | string;
+  question: string;
+  a: string;
+  b: string;
+  c: string;
+  d: string;
+  answer?: "A" | "B" | "C" | "D";
+  reason?: string;
+  solved?: boolean;
+};
 
 let state: AppState = "clock";
 let longPressTimer: number | undefined;
 let pointerStart: { x: number; y: number } | undefined;
 let capturedPhoto: Blob | null = null;
+let extractedQuestions = toDisplayedQuestions(loadStoredQuestions());
 let cameraRequestId = 0;
+let pendingPhotoCount = 0;
+let processingMessage = "";
+
+if (!initializeApiKey()) {
+  try {
+    apiKeyDialog.showModal();
+  } catch {
+    apiKeyDialog.setAttribute("open", "");
+  }
+} else {
+  void solveSavedQuestions();
+}
+
+apiKeyForm.addEventListener("submit", (event: SubmitEvent) => {
+  event.preventDefault();
+  saveApiKey(apiKeyInput.value);
+  apiKeyInput.value = "";
+  apiKeyDialog.close();
+  void solveSavedQuestions();
+});
+
+getElement<HTMLButtonElement>("skip-api-key").addEventListener("click", () => {
+  apiKeyDialog.close();
+});
 
 startClock(clockElement);
 
@@ -42,42 +86,192 @@ function setState(nextState: AppState): void {
   state = nextState;
   clockScreen.hidden = state !== "clock";
   cameraScreen.hidden = state !== "camera";
+  resultsScreen.hidden = state !== "results";
 }
 
-function getSimulatedApiResponse(): AnswerMap {
-  const answers: AnswerMap = {};
-  const answerCycle = ["c", "b", "d"];
-
-  for (let question = 1; question <= 25; question += 1) {
-    answers[question] = answerCycle[(question - 1) % answerCycle.length];
+function displayQuestions(questions: DisplayedQuestion[]): void {
+  if (questions.length === 0) {
+    resultsList.replaceChildren();
+    return;
   }
 
-  return answers;
-}
-
-function displayAnswers(answers: AnswerMap): void {
-  const rows = Object.entries(answers).map(([question, answer]) => {
+  const rows = questions.map((question) => {
     const row = document.createElement("li");
-    row.textContent = `${question}: ${answer}`;
+    row.className = "extracted-question";
+
+    const title = document.createElement("h2");
+    title.textContent = `${String(question.id)} · ${question.question.trim().slice(0, 4)} — ${question.question}`;
+    row.append(title);
+
+    if (question.solved && question.answer) {
+      const solution = document.createElement("p");
+      solution.textContent = `Poprawna odpowiedź: ${question.answer}`;
+      solution.style.fontWeight = "700";
+      row.append(solution);
+    }
+
+    if (question.reason) {
+      const reason = document.createElement("p");
+      reason.textContent = question.reason;
+      reason.style.fontSize = "0.85rem";
+      row.append(reason);
+    }
+
+    const answers = document.createElement("ul");
+    for (const letter of ["a", "b", "c", "d"] as const) {
+      const answer = document.createElement("li");
+      const label = document.createElement("strong");
+      label.textContent = `${letter.toUpperCase()}. `;
+      const text = document.createElement("span");
+      text.textContent = question[letter] || "(brak odczytanej odpowiedzi)";
+      if (question.answer && question.answer === letter.toUpperCase()) {
+        text.style.fontWeight = "700";
+        text.style.color = "#0b8f4a";
+      }
+      answer.append(label, text);
+      answers.append(answer);
+    }
+
+    row.append(answers);
     return row;
   });
 
   resultsList.replaceChildren(...rows);
-  resultsList.hidden = false;
 }
 
-async function showAnswersNotification(answers: AnswerMap): Promise<void> {
-  const registration = await navigator.serviceWorker.ready;
-  const icon = `${import.meta.env.BASE_URL}icons/icon.svg`;
-  const body = Object.entries(answers)
-    .map(([question, answer]) => `${question}: ${answer}`)
-    .join("\n");
+function toDisplayedQuestions(questions: StoredQuestion[]): DisplayedQuestion[] {
+  return questions
+    .map((question) => ({
+      id: question.questionNumber ?? "?",
+      question: question.question,
+      a: question.a,
+      b: question.b,
+      c: question.c,
+      d: question.d,
+      answer: question.answer,
+      reason: question.reason,
+      solved: question.solved,
+    }))
+    .sort((left, right) => {
+      const leftId = typeof left.id === "number" ? left.id : Number.NaN;
+      const rightId = typeof right.id === "number" ? right.id : Number.NaN;
+      if (Number.isNaN(leftId)) {
+        return Number.isNaN(rightId) ? 0 : 1;
+      }
+      if (Number.isNaN(rightId)) {
+        return -1;
+      }
+      return leftId - rightId;
+    });
+}
 
-  await registration.showNotification("Odpowiedzi", {
-    body,
-    icon,
-    badge: icon,
+function updateProcessingStatus(): void {
+  processingStatus.textContent = pendingPhotoCount > 0
+    ? `Przetwarzanie zdjęć: ${pendingPhotoCount} w kolejce lub w trakcie.`
+    : processingMessage;
+}
+
+function requestNotificationPermission(): Promise<NotificationPermission | "unsupported"> {
+  if (!("Notification" in window)) {
+    return Promise.resolve("unsupported");
+  }
+  if (Notification.permission !== "default") {
+    return Promise.resolve(Notification.permission);
+  }
+
+  return Notification.requestPermission().catch((error: unknown) => {
+    console.error("Nie udało się uzyskać zgody na powiadomienia.", error);
+    return "denied";
   });
+}
+
+function formatQuestionForNotification(question: DisplayedQuestion): string {
+  const title = `${String(question.id)} · ${question.question.trim().slice(0, 4)} — ${question.question}`;
+  const options = (["a", "b", "c", "d"] as const)
+    .map((letter) => `${letter.toUpperCase()}. ${question[letter] || "(brak odczytanej odpowiedzi)"}`)
+    .join("\n");
+  const solution = question.answer ? `\nPoprawna odpowiedź: ${question.answer}` : "";
+  const reason = question.reason ? `\n${question.reason}` : "";
+  return `${title}\n${options}${solution}${reason}`;
+}
+
+async function sendResultsNotification(
+  questions: DisplayedQuestion[],
+  permissionPromise: Promise<NotificationPermission | "unsupported">,
+): Promise<boolean> {
+  const permission = await permissionPromise;
+  if (permission !== "granted" || !("serviceWorker" in navigator)) {
+    return false;
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  await registration.showNotification("Wyniki odczytu zdjęć", {
+    body: questions.map(formatQuestionForNotification).join("\n\n"),
+    tag: "testyv2-questions",
+  });
+  return true;
+}
+
+async function processCapturedPhoto(
+  photo: Blob,
+  permissionPromise: Promise<NotificationPermission | "unsupported">,
+): Promise<void> {
+  pendingPhotoCount += 1;
+  processingMessage = "";
+  updateProcessingStatus();
+
+  try {
+    const storedQuestions = await processImage(photo);
+    extractedQuestions = toDisplayedQuestions(storedQuestions);
+
+    if (state === "results") {
+      displayQuestions(extractedQuestions);
+    }
+
+    try {
+      const sent = await sendResultsNotification(extractedQuestions, permissionPromise);
+      processingMessage = sent
+        ? "Zdjęcie przetworzone. Wysłano powiadomienie z pełną listą odpowiedzi."
+        : "Zdjęcie przetworzone. Powiadomienie wymaga zgody przeglądarki.";
+    } catch (error) {
+      console.error("Nie udało się wysłać powiadomienia z wynikami.", error);
+      processingMessage = "Zdjęcie przetworzone, ale nie udało się wysłać powiadomienia.";
+    }
+  } catch (error) {
+    console.error("Nie udało się przetworzyć zdjęcia.", error);
+    processingMessage = "Nie udało się przetworzyć zdjęcia. Spróbuj ponownie.";
+  } finally {
+    pendingPhotoCount -= 1;
+    updateProcessingStatus();
+  }
+}
+
+async function solveSavedQuestions(): Promise<void> {
+  const hasPendingQuestions = loadStoredQuestions().some((question) =>
+    !question.solved &&
+    [question.a, question.b, question.c, question.d].every((answer) => answer.trim().length > 0),
+  );
+  if (!hasPendingQuestions) {
+    return;
+  }
+
+  pendingPhotoCount += 1;
+  processingMessage = "";
+  updateProcessingStatus();
+  try {
+    const storedQuestions = await solvePendingQuestions();
+    extractedQuestions = toDisplayedQuestions(storedQuestions);
+    if (state === "results") {
+      displayQuestions(extractedQuestions);
+    }
+    processingMessage = "Uzupełniono rozwiązania zapisanych pytań.";
+  } catch (error) {
+    console.error("Nie udało się rozwiązać zapisanych pytań.", error);
+    processingMessage = "Nie udało się rozwiązać zapisanych pytań.";
+  } finally {
+    pendingPhotoCount -= 1;
+    updateProcessingStatus();
+  }
 }
 
 function clearLongPress(): void {
@@ -88,36 +282,6 @@ function clearLongPress(): void {
   pointerStart = undefined;
 }
 
-function cameraErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.startsWith("Kamera wymaga")) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message.startsWith("Kamera nie dostarczyła")) {
-    return "Nie udało się odebrać obrazu z kamery. Zamknij inne aplikacje korzystające z kamery i spróbuj ponownie.";
-  }
-
-  if (error instanceof DOMException) {
-    switch (error.name) {
-      case "NotAllowedError":
-      case "PermissionDeniedError":
-        return "Brak dostępu do kamery. Zezwól na używanie kamery w ustawieniach przeglądarki.";
-      case "NotFoundError":
-      case "DevicesNotFoundError":
-        return "Nie znaleziono kamery w tym urządzeniu.";
-      case "NotReadableError":
-      case "TrackStartError":
-        return "Nie można uruchomić kamery. Może być używana przez inną aplikację.";
-      case "AbortError":
-        return "Uruchamianie kamery zostało anulowane.";
-      case "SecurityError":
-        return "Dostęp do kamery jest zablokowany. Otwórz aplikację przez HTTPS.";
-    }
-  }
-
-  return "Wystąpił błąd podczas uruchamiania kamery.";
-}
-
 async function openCamera(): Promise<void> {
   if (state !== "clock") {
     return;
@@ -125,8 +289,8 @@ async function openCamera(): Promise<void> {
 
   const requestId = ++cameraRequestId;
   clearLongPress();
-  clockError.hidden = true;
-  cameraError.hidden = true;
+  capturedPhoto = null;
+  takePhotoButton.textContent = "ZRÓB ZDJĘCIE I ODCZYTAJ";
   takePhotoButton.disabled = true;
   setState("camera");
 
@@ -136,16 +300,13 @@ async function openCamera(): Promise<void> {
       return;
     }
     takePhotoButton.disabled = false;
-  } catch (error) {
-    console.error("Nie udało się uruchomić kamery:", error);
+  } catch {
     if (requestId !== cameraRequestId) {
       return;
     }
     stopCamera(cameraPreview);
     takePhotoButton.disabled = false;
-    clockError.textContent = cameraErrorMessage(error);
-    clockError.hidden = false;
-    setState("clock");
+    returnToClock();
   }
 }
 
@@ -153,8 +314,6 @@ function returnToClock(): void {
   cameraRequestId += 1;
   clearLongPress();
   stopCamera(cameraPreview);
-  cameraError.hidden = true;
-  clockError.hidden = true;
   takePhotoButton.disabled = false;
   setState("clock");
 }
@@ -200,76 +359,43 @@ takePhotoButton.addEventListener("click", async () => {
   }
 
   takePhotoButton.disabled = true;
-  cameraError.hidden = true;
-  let notificationPermission: NotificationPermission | null = null;
-  let notificationError: string | null = null;
-
-  if ("Notification" in window) {
-    try {
-      notificationPermission = Notification.permission;
-      if (notificationPermission === "default") {
-        notificationPermission = await Notification.requestPermission();
-      }
-    } catch (error) {
-      console.error("Nie udało się uzyskać zgody na powiadomienia:", error);
-      notificationError = "Nie udało się uzyskać zgody na powiadomienia.";
-    }
-  } else {
-    notificationError = "Ta przeglądarka nie obsługuje powiadomień.";
-  }
-
   try {
     if (state !== "camera") {
       return;
     }
 
-    const photo = await takePhoto(cameraPreview);
+    const permissionPromise = requestNotificationPermission();
+    const photo = capturedPhoto ?? (await takePhoto(cameraPreview));
     if (state !== "camera") {
       return;
     }
     capturedPhoto = photo;
     stopCamera(cameraPreview);
-
-    // import { uploadPhoto } from "./api";
-    let answers = getSimulatedApiResponse();
-    // const response = await uploadPhoto(photo);
-    // answers = (await response.json()) as AnswerMap;
-    displayAnswers(answers);
-    setState("clock");
-
-    if (!notificationError && notificationPermission !== "granted") {
-      notificationError = "Zezwól na powiadomienia w ustawieniach przeglądarki, aby otrzymywać wyniki na telefonie.";
-    }
-    if (!notificationError) {
-      try {
-        await showAnswersNotification(answers);
-      } catch (error) {
-        console.error("Nie udało się wysłać powiadomienia z odpowiedziami:", error);
-        notificationError = "Nie udało się wyświetlić powiadomienia z odpowiedziami.";
-      }
-    }
-    if (notificationError) {
-      clockError.textContent = notificationError;
-      clockError.hidden = false;
-    }
-  } catch (error) {
-    console.error("Nie udało się wykonać zdjęcia:", error);
+    capturedPhoto = null;
+    processingMessage = "";
+    updateProcessingStatus();
+    displayQuestions(extractedQuestions);
+    setState("results");
+    void processCapturedPhoto(photo, permissionPromise);
+  } catch {
     if (state !== "camera") {
       return;
     }
-    cameraError.textContent = "Nie udało się wykonać zdjęcia. Spróbuj ponownie.";
-    cameraError.hidden = false;
+    returnToClock();
   } finally {
     takePhotoButton.disabled = false;
   }
 });
 
 cancelCameraButton.addEventListener("click", returnToClock);
+returnFromResultsButton.addEventListener("click", returnToClock);
+addPhotoButton.addEventListener("click", () => {
+  setState("clock");
+  void openCamera();
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error: unknown) => {
-      console.error("Nie udało się zarejestrować service workera:", error);
-    });
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => undefined);
   });
 }

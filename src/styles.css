@@ -68,23 +68,6 @@ body {
   letter-spacing: 0.02em;
 }
 
-.results-list {
-  position: absolute;
-  top: 50%;
-  left: max(1rem, env(safe-area-inset-left));
-  z-index: 2;
-  width: clamp(4rem, 16vw, 7rem);
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  color: rgb(160 160 160 / 12%);
-  font-size: min(0.95rem, 3.2vw, calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem) / 32));
-  line-height: 1.12;
-  list-style: none;
-  font-variant-numeric: tabular-nums;
-  transform: translateY(-50%);
-}
-
 .camera-screen {
   display: flex;
   align-items: center;
@@ -136,6 +119,51 @@ body {
   color: #fff;
 }
 
+.api-key-dialog {
+  width: min(28rem, calc(100% - 2rem));
+  padding: 1.5rem;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 0.5rem;
+  background: #151515;
+  color: #fff;
+}
+
+.api-key-dialog::backdrop {
+  background: rgb(0 0 0 / 80%);
+}
+
+.api-key-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.api-key-form h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.api-key-form label {
+  color: #bdbdbd;
+  font-size: 0.9rem;
+}
+
+.api-key-form input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem;
+  border: 1px solid #777;
+  border-radius: 0.25rem;
+  background: #000;
+  color: #fff;
+  font: inherit;
+}
+
+.api-key-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
 .message {
   position: absolute;
   right: 1rem;
@@ -153,4 +181,68 @@ body {
   padding: 0.75rem;
   border-radius: 0.25rem;
   background: rgb(0 0 0 / 75%);
+}
+
+.results-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding:
+    max(1.25rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.results-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.results-header p {
+  margin: 0;
+  color: #bdbdbd;
+  font-size: 0.9rem;
+}
+
+.results-header .processing-status {
+  margin-top: 0.5rem;
+  color: #fff;
+}
+
+.extracted-questions {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0 0.25rem;
+  overflow: auto;
+  list-style: none;
+}
+
+.extracted-question {
+  padding: 0.75rem 0;
+}
+
+.extracted-question h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.extracted-question ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.extracted-question li {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.results-screen > .button {
+  align-self: center;
+  flex: 0 0 auto;
 }

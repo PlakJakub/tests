@@ -15,20 +15,39 @@
     <title>Camera</title>
   </head>
   <body>
+    <dialog id="api-key-dialog" class="api-key-dialog" aria-labelledby="api-key-title">
+      <form id="api-key-form" class="api-key-form">
+        <h1 id="api-key-title">Klucz API OpenAI</h1>
+        <label for="api-key-input">Wprowadź klucz, aby włączyć odczyt i rozwiązywanie pytań.</label>
+        <input id="api-key-input" name="apiKey" type="password" autocomplete="off" spellcheck="false" />
+        <div class="api-key-actions">
+          <button class="button button-secondary" id="skip-api-key" type="button">PÓŹNIEJ</button>
+          <button class="button" type="submit">ZAPISZ KLUCZ</button>
+        </div>
+      </form>
+    </dialog>
     <main id="app">
       <section id="clock-screen" class="screen clock-screen" aria-label="Zegar">
         <time id="clock" class="clock" aria-live="off">00:00</time>
-        <ol id="results-list" class="results-list" aria-label="Odpowiedzi" hidden></ol>
-        <p id="clock-error" class="message" role="alert" hidden></p>
       </section>
 
       <section id="camera-screen" class="screen camera-screen" aria-label="Aparat" hidden>
         <video id="camera-preview" autoplay muted playsinline></video>
-        <p id="camera-error" class="message camera-message" role="alert" hidden></p>
         <div class="camera-controls">
-          <button id="take-photo" class="button" type="button">ZRÓB ZDJĘCIE</button>
+          <button id="take-photo" class="button" type="button">ZRÓB ZDJĘCIE I ODCZYTAJ</button>
           <button id="cancel-camera" class="button button-secondary" type="button">POWRÓT</button>
         </div>
+      </section>
+
+      <section id="results-screen" class="screen results-screen" aria-label="Odczytane pytania" hidden>
+        <header class="results-header">
+          <h1>Odczytane pytania</h1>
+          <p>Zdjęcia są przetwarzane w tle. Lista opcji A–D oraz rozwiązania łączą się i są sortowane rosnąco po ID.</p>
+          <p id="processing-status" class="processing-status" aria-live="polite"></p>
+        </header>
+        <ol id="extracted-questions" class="extracted-questions"></ol>
+        <button id="add-photo" class="button button-secondary" type="button">DODAJ NASTĘPNE ZDJĘCIE</button>
+        <button id="return-from-results" class="button" type="button">WRÓĆ DO ZEGARA</button>
       </section>
 
     </main>
