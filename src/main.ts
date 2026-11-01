@@ -12,6 +12,8 @@ const MOVE_CANCEL_DISTANCE = 10;
 
 const clockScreen = getElement<HTMLElement>("clock-screen");
 const clockElement = getElement<HTMLTimeElement>("clock");
+const clockAnswerPanel = getElement<HTMLElement>("clock-answer-panel");
+const clockAnswers = getElement<HTMLOListElement>("clock-answers");
 const cameraScreen = getElement<HTMLElement>("camera-screen");
 const resultsScreen = getElement<HTMLElement>("results-screen");
 const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
@@ -45,6 +47,8 @@ let extractedQuestions = toDisplayedQuestions(loadStoredQuestions());
 let cameraRequestId = 0;
 let pendingPhotoCount = 0;
 let processingMessage = "";
+
+displayClockAnswers();
 
 if (!initializeApiKey()) {
   try {
@@ -139,6 +143,32 @@ function displayQuestions(questions: DisplayedQuestion[]): void {
   resultsList.replaceChildren(...rows);
 }
 
+function displayClockAnswers(): void {
+  const readyQuestions = extractedQuestions.filter(
+    (question) =>
+      typeof question.id === "number" &&
+      question.solved &&
+      question.answer,
+  );
+  const rows = readyQuestions.map((question) => {
+    const row = document.createElement("li");
+    const label = document.createElement("span");
+    label.textContent = `${String(question.id)} · ${question.question.trim().slice(0, 4)}: `;
+    const answer = document.createElement("strong");
+    answer.textContent = question.answer ?? "";
+    row.append(label, answer);
+    return row;
+  });
+
+  clockAnswers.replaceChildren(...rows);
+  clockAnswerPanel.hidden = rows.length === 0;
+  const availableHeight = window.innerHeight - 24;
+  const fontSize = rows.length > 0
+    ? Math.min(9, Math.max(4, availableHeight / (rows.length * 1.1)))
+    : 9;
+  clockAnswerPanel.style.setProperty("--answer-font-size", `${fontSize}px`);
+}
+
 function toDisplayedQuestions(questions: StoredQuestion[]): DisplayedQuestion[] {
   return questions
     .map((question) => ({
@@ -223,6 +253,7 @@ async function processCapturedPhoto(
   try {
     const storedQuestions = await processImage(photo);
     extractedQuestions = toDisplayedQuestions(storedQuestions);
+    displayClockAnswers();
 
     if (state === "results") {
       displayQuestions(extractedQuestions);
@@ -261,6 +292,7 @@ async function solveSavedQuestions(): Promise<void> {
   try {
     const storedQuestions = await solvePendingQuestions();
     extractedQuestions = toDisplayedQuestions(storedQuestions);
+    displayClockAnswers();
     if (state === "results") {
       displayQuestions(extractedQuestions);
     }
@@ -331,6 +363,8 @@ clockScreen.addEventListener("pointerdown", (event: PointerEvent) => {
     void openCamera();
   }, LONG_PRESS_MS);
 });
+
+window.addEventListener("resize", displayClockAnswers);
 
 clockScreen.addEventListener("contextmenu", (event: MouseEvent) => {
   event.preventDefault();

@@ -51,7 +51,7 @@ body {
   align-items: center;
   justify-content: center;
   -webkit-touch-callout: none;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -66,6 +66,42 @@ body {
   font-weight: 300;
   line-height: 1;
   letter-spacing: 0.02em;
+}
+
+.clock-answer-panel {
+  position: absolute;
+  top: 50%;
+  left: max(0.5rem, env(safe-area-inset-left));
+  max-width: 38vw;
+  overflow: hidden;
+  transform: translateY(-50%);
+  color: rgb(255 255 255 / 16%);
+  text-align: left;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.clock-answer-panel[hidden] {
+  display: none;
+}
+
+.clock-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--answer-font-size, 9px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.clock-answers li {
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .camera-screen {
