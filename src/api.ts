@@ -6,9 +6,49 @@ export { normalizeQuestionText } from "../shared/normalizeQuestions";
 export type { ExtractedQuestion, ExtractedQuestions } from "../shared/types";
 
 const API_KEY_STORAGE = "testyv2-openai-api-key";
+const MODEL_STORAGE = "testyv2-openai-model";
+export const OPENAI_MODEL_OPTIONS = [
+  { value: "gpt-4.1", label: "GPT-4.1 — dokładniejszy" },
+  { value: "gpt-4.1-mini", label: "GPT-4.1 mini — szybszy i tańszy" },
+] as const;
+export type OpenAIModel = (typeof OPENAI_MODEL_OPTIONS)[number]["value"];
+
+function isOpenAIModel(value: string | null): value is OpenAIModel {
+  return OPENAI_MODEL_OPTIONS.some((option) => option.value === value);
+}
+
+function readStoredModel(): OpenAIModel {
+  try {
+    const storedModel = localStorage.getItem(MODEL_STORAGE);
+    return isOpenAIModel(storedModel) ? storedModel : "gpt-4.1";
+  } catch {
+    return "gpt-4.1";
+  }
+}
+
+let selectedModel: OpenAIModel = readStoredModel();
 let apiKeyLoaded = false;
 let cachedApiKey: string | undefined;
 let client: OpenAI | undefined;
+
+export function getSelectedModel(): OpenAIModel {
+  return selectedModel;
+}
+
+export function saveSelectedModel(value: string): boolean {
+  if (!isOpenAIModel(value)) {
+    return false;
+  }
+
+  selectedModel = value;
+  try {
+    localStorage.setItem(MODEL_STORAGE, value);
+    return true;
+  } catch (error) {
+    console.error("Nie udało się zapisać wybranego modelu.", error);
+    return false;
+  }
+}
 
 export function initializeApiKey(): boolean {
   if (apiKeyLoaded) {
@@ -153,7 +193,7 @@ export async function extractQuestionsFromPhoto(
       return [];
     }
     const response = await client.responses.create({
-      model: "gpt-4.1",
+      model: getSelectedModel(),
       input: [
         {
           role: "user",
@@ -284,7 +324,7 @@ reason powinien krótko wyjaśniać, dlaczego wybrana odpowiedź jest prawidłow
   let response: Awaited<ReturnType<typeof client.responses.create>>;
   try {
     response = await client.responses.create({
-      model: "gpt-4.1",
+      model: getSelectedModel(),
       tools: [{ type: "web_search" }],
       instructions,
       input,

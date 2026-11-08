@@ -4,6 +4,7 @@ import { isLikelyDuplicateQuestion } from "../shared/mergeQuestions";
 import type { StoredQuestion, StoredQuestions } from "../shared/types";
 
 const STORAGE_KEY = "testyv2-stored-questions";
+let storageGeneration = 0;
 
 function isStoredQuestion(value: unknown): value is StoredQuestion {
   if (!value || typeof value !== "object") {
@@ -61,6 +62,19 @@ export function saveStoredQuestions(questions: StoredQuestions): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
   } catch {
     return;
+  }
+}
+
+export function clearStoredQuestions(): boolean {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    storageGeneration += 1;
+    return true;
+  } catch (error) {
+    console.error("Nie udało się wyczyścić zapisanych odpowiedzi.", error);
+    return false;
   }
 }
 
@@ -234,7 +248,8 @@ function getSimilarity(left: string, right: string): number {
 }
 
 export async function processImage(image: Blob | string): Promise<StoredQuestions> {
-  const task = processingQueue.then(() => processImageNow(image));
+  const generation = storageGeneration;
+  const task = processingQueue.then(() => processImageNow(image, generation));
   processingQueue = task.then(
     () => undefined,
     () => undefined,
@@ -243,7 +258,8 @@ export async function processImage(image: Blob | string): Promise<StoredQuestion
 }
 
 export async function solvePendingQuestions(): Promise<StoredQuestions> {
-  const task = processingQueue.then(() => solvePendingQuestionsNow());
+  const generation = storageGeneration;
+  const task = processingQueue.then(() => solvePendingQuestionsNow(loadStoredQuestions(), generation));
   processingQueue = task.then(
     () => undefined,
     () => undefined,
@@ -255,6 +271,7 @@ let processingQueue: Promise<void> = Promise.resolve();
 
 async function solvePendingQuestionsNow(
   questions: StoredQuestions = loadStoredQuestions(),
+  generation = storageGeneration,
 ): Promise<StoredQuestions> {
   for (let index = 0; index < questions.length; index += 1) {
     const question = questions[index];
@@ -267,12 +284,20 @@ async function solvePendingQuestionsNow(
     }
   }
 
+  if (generation !== storageGeneration) {
+    return loadStoredQuestions();
+  }
+
   const sortedQuestions = sortStoredQuestions(questions);
   saveStoredQuestions(sortedQuestions);
   return sortedQuestions;
 }
 
-async function processImageNow(image: Blob | string): Promise<StoredQuestions> {
+async function processImageNow(image: Blob | string, generation: number): Promise<StoredQuestions> {
+  if (generation !== storageGeneration) {
+    return loadStoredQuestions();
+  }
+
   const questions = loadStoredQuestions();
 
   try {
@@ -309,10 +334,13 @@ async function processImageNow(image: Blob | string): Promise<StoredQuestions> {
     }
 
   } catch {
+    if (generation !== storageGeneration) {
+      return loadStoredQuestions();
+    }
     const sortedQuestions = sortStoredQuestions(questions);
     saveStoredQuestions(sortedQuestions);
     return sortedQuestions;
   }
 
-  return solvePendingQuestionsNow(questions);
+  return solvePendingQuestionsNow(questions, generation);
 }

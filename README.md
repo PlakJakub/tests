@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` uruchamia aplikację Vite. Na ekranie zegara przytrzymaj ekran przez 700 ms, aby otworzyć kamerę, a następnie wybierz **ZRÓB ZDJĘCIE I ODCZYTAJ**. Zdjęcie jest przetwarzane w tle, więc możesz od razu dodać kolejne. Pytania z kolejnych zdjęć są łączone, duplikaty pomijane, a lista wyników sortowana rosnąco po numerze pytania. Rozwiązane pytania są dodatkowo wyświetlane bezpośrednio na ekranie zegara jako numer, pierwsze cztery znaki pytania i litera odpowiedzi. Po odczytaniu aplikacja próbuje rozwiązać wszystkie pytania z kompletem opcji A–D, w tym zapisane wcześniej bez rozwiązania; przy uruchomieniu ponawia też rozwiązanie zapisanych pytań. Po każdym zdjęciu aktualizuje pełną listę opcji i rozwiązań oraz wysyła ją jako powiadomienie przeglądarki, jeśli udzielono zgody. Jeśli rozwiązanie nie powiedzie się, przy pytaniu pojawi się informacja o błędzie.
+`npm run dev` uruchamia aplikację Vite. Na ekranie zegara przytrzymaj ekran przez 700 ms, aby otworzyć kamerę, a następnie wybierz **ZRÓB ZDJĘCIE I ODCZYTAJ**. Zdjęcie jest przetwarzane w tle, więc możesz od razu dodać kolejne. Pytania z kolejnych zdjęć są łączone, duplikaty pomijane, a lista wyników sortowana rosnąco po numerze pytania. Rozwiązane pytania są dodatkowo wyświetlane bezpośrednio na ekranie zegara jako numer, pierwsze cztery znaki pytania i litera odpowiedzi. Wyniki są czyszczone przy każdym uruchomieniu aplikacji; podczas pracy można je wyczyścić w ustawieniach otwieranych ikoną koła zębatego na ekranie aparatu. W ustawieniach można też wybrać model OpenAI używany zarówno do odczytu zdjęć, jak i rozwiązywania pytań. Przycisk **PODGLĄD ODPOWIEDZI** na ekranie aparatu otwiera listę bieżących wyników bez robienia zdjęcia ani uruchamiania analizy. Po każdym zdjęciu aplikacja aktualizuje pełną listę opcji i rozwiązań oraz wysyła ją jako powiadomienie przeglądarki, jeśli udzielono zgody. Jeśli rozwiązanie nie powiedzie się, przy pytaniu pojawi się informacja o błędzie.
 
 Numer pytania jest odczytywany z numeracji wydrukowanej na stronie — np. pytanie oznaczone jako `12` pozostaje pytaniem `12`, nawet jeśli jest pierwszym pytaniem na zdjęciu. Na ekranie wyników wybierz **DODAJ NASTĘPNE ZDJĘCIE**, aby zeskanować kolejną kartkę, także gdy poprzednie zdjęcie jest jeszcze przetwarzane. Pytanie może pojawić się na kilku zdjęciach; odpowiedź już zapisana nie jest rozwiązywana ponownie. Dla pytań niekompletnych kolejne zdjęcie może uzupełnić brakujące odpowiedzi. Identyfikator z pierwszymi czterema znakami pytania jest dodawany wyłącznie w widoku i powiadomieniu.
 
@@ -57,11 +57,12 @@ GitHub Pages zapewnia HTTPS, więc można tam udzielić stronie dostępu do kame
 
 - Przytrzymaj ekran zegara przez 700 ms, nie przesuwając palca, aby otworzyć podgląd tylnej kamery.
 - Naciśnij **ZRÓB ZDJĘCIE I ODCZYTAJ**, aby utworzyć JPEG o jakości 0.9 i przesłać go do API. Wyniki są wyświetlane jako tekst pytania oraz odpowiedzi A–D.
+- Wybierz **PODGLĄD ODPOWIEDZI**, aby przejść do listy wyników bez wykonywania zdjęcia. Ikona koła zębatego otwiera ustawienia modelu OpenAI i czyszczenia odpowiedzi.
 - **POWRÓT** zamyka aparat i wraca do zegara.
 
 Po wyświetleniu wyniku wybierz **WRÓĆ DO ZEGARA**, a następnie przytrzymaj ekran zegara, aby wykonać kolejne zdjęcie. `extractQuestionsFromPhoto(photo)` znajduje się w `src/api.ts`; funkcja serwerowa `extractQuestionsFromImage(imagePath)` jest w `server/extractQuestions.ts`.
 
-Funkcja w `src/api.ts` przyjmuje zdjęcie JPG, PNG lub WEBP jako `Blob`. Obraz jest kodowany jako Base64 Data URL i wysyłany do Responses API modelu `gpt-4.1` z `detail: "high"` i ścisłym JSON Schema. Zdjęcia są przekazywane do OpenAI, a korzystanie z API może wiązać się z opłatami. Błędy API i nieprawidłowe dane są obsługiwane bez komunikatów i bez przerywania działania aplikacji.
+Funkcja w `src/api.ts` przyjmuje zdjęcie JPG, PNG lub WEBP jako `Blob`. Obraz jest kodowany jako Base64 Data URL i wysyłany do Responses API wybranego modelu (domyślnie `gpt-4.1`) z `detail: "high"` i ścisłym JSON Schema. Dostępny jest też `gpt-4.1-mini`. Zdjęcia są przekazywane do OpenAI, a korzystanie z API może wiązać się z opłatami.
 
 ## PWA i Capacitor
 

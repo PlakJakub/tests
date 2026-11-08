@@ -1,11 +1,17 @@
 import { startCamera, stopCamera, takePhoto } from "./camera";
 import { startClock } from "./clock";
-import { loadStoredQuestions, processImage, solvePendingQuestions } from "./questionStore";
-import { initializeApiKey, saveApiKey } from "./api";
+import { clearStoredQuestions, loadStoredQuestions, processImage, solvePendingQuestions } from "./questionStore";
+import {
+  getSelectedModel,
+  initializeApiKey,
+  OPENAI_MODEL_OPTIONS,
+  saveApiKey,
+  saveSelectedModel,
+} from "./api";
 import type { StoredQuestion } from "../shared/types";
 import "./styles.css";
 
-type AppState = "clock" | "camera" | "results";
+type AppState = "clock" | "camera" | "settings" | "results";
 
 const LONG_PRESS_MS = 700;
 const MOVE_CANCEL_DISTANCE = 10;
@@ -15,10 +21,17 @@ const clockElement = getElement<HTMLTimeElement>("clock");
 const clockAnswerPanel = getElement<HTMLElement>("clock-answer-panel");
 const clockAnswers = getElement<HTMLOListElement>("clock-answers");
 const cameraScreen = getElement<HTMLElement>("camera-screen");
+const settingsScreen = getElement<HTMLElement>("settings-screen");
 const resultsScreen = getElement<HTMLElement>("results-screen");
 const cameraPreview = getElement<HTMLVideoElement>("camera-preview");
 const takePhotoButton = getElement<HTMLButtonElement>("take-photo");
 const cancelCameraButton = getElement<HTMLButtonElement>("cancel-camera");
+const openSettingsButton = getElement<HTMLButtonElement>("open-settings");
+const modelSelect = getElement<HTMLSelectElement>("model-select");
+const settingsStatus = getElement<HTMLParagraphElement>("settings-status");
+const returnFromSettingsButton = getElement<HTMLButtonElement>("return-from-settings");
+const previewAnswersButton = getElement<HTMLButtonElement>("preview-answers");
+const clearAnswersButton = getElement<HTMLButtonElement>("clear-answers");
 const apiKeyDialog = getElement<HTMLDialogElement>("api-key-dialog");
 const apiKeyForm = getElement<HTMLFormElement>("api-key-form");
 const apiKeyInput = getElement<HTMLInputElement>("api-key-input");
@@ -43,12 +56,17 @@ let state: AppState = "clock";
 let longPressTimer: number | undefined;
 let pointerStart: { x: number; y: number } | undefined;
 let capturedPhoto: Blob | null = null;
+const startupClearSucceeded = clearStoredQuestions();
 let extractedQuestions = toDisplayedQuestions(loadStoredQuestions());
 let cameraRequestId = 0;
 let pendingPhotoCount = 0;
 let processingMessage = "";
 
 displayClockAnswers();
+if (!startupClearSucceeded) {
+  processingMessage = "Nie udało się wyczyścić odpowiedzi z poprzedniej sesji.";
+  updateProcessingStatus();
+}
 
 if (!initializeApiKey()) {
   try {
@@ -56,9 +74,15 @@ if (!initializeApiKey()) {
   } catch {
     apiKeyDialog.setAttribute("open", "");
   }
-} else {
-  void solveSavedQuestions();
 }
+
+for (const model of OPENAI_MODEL_OPTIONS) {
+  const option = document.createElement("option");
+  option.value = model.value;
+  option.textContent = model.label;
+  modelSelect.append(option);
+}
+modelSelect.value = getSelectedModel();
 
 apiKeyForm.addEventListener("submit", (event: SubmitEvent) => {
   event.preventDefault();
@@ -90,6 +114,7 @@ function setState(nextState: AppState): void {
   state = nextState;
   clockScreen.hidden = state !== "clock";
   cameraScreen.hidden = state !== "camera";
+  settingsScreen.hidden = state !== "settings";
   resultsScreen.hidden = state !== "results";
 }
 
@@ -422,13 +447,50 @@ takePhotoButton.addEventListener("click", async () => {
 });
 
 cancelCameraButton.addEventListener("click", returnToClock);
+openSettingsButton.addEventListener("click", () => {
+  modelSelect.value = getSelectedModel();
+  settingsStatus.textContent = "";
+  setState("settings");
+});
+modelSelect.addEventListener("change", () => {
+  settingsStatus.textContent = saveSelectedModel(modelSelect.value)
+    ? "Model zapisany."
+    : "Nie udało się zapisać modelu. Sprawdź pamięć przeglądarki.";
+});
+returnFromSettingsButton.addEventListener("click", () => {
+  setState("camera");
+});
+previewAnswersButton.addEventListener("click", () => {
+  cameraRequestId += 1;
+  stopCamera(cameraPreview);
+  displayQuestions(extractedQuestions);
+  processingMessage = extractedQuestions.length > 0
+    ? "Podgląd zapisanych odpowiedzi."
+    : "Brak zapisanych odpowiedzi.";
+  updateProcessingStatus();
+  setState("results");
+});
+clearAnswersButton.addEventListener("click", () => {
+  if (!clearStoredQuestions()) {
+    processingMessage = "Nie udało się wyczyścić zapisanych odpowiedzi.";
+    updateProcessingStatus();
+    return;
+  }
+
+  extractedQuestions = [];
+  displayClockAnswers();
+  displayQuestions(extractedQuestions);
+  processingMessage = "Odpowiedzi wyczyszczone.";
+  updateProcessingStatus();
+  returnToClock();
+});
 returnFromResultsButton.addEventListener("click", returnToClock);
 addPhotoButton.addEventListener("click", () => {
   setState("clock");
   void openCamera();
 });
 
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && !import.meta.env.DEV) {
   window.addEventListener("load", () => {
     void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => undefined);
   });

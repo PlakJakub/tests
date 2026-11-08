@@ -128,6 +128,35 @@ body {
   gap: 0.75rem;
 }
 
+.camera-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.camera-clear-button {
+  position: absolute;
+  z-index: 1;
+  top: max(1rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  display: grid;
+  width: 3.5rem;
+  min-height: 3.5rem;
+  padding: 0.9rem;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 45%);
+  place-items: center;
+}
+
+.camera-clear-button svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
 .button {
   min-height: 3.25rem;
   padding: 0.85rem 1.5rem;
@@ -228,6 +257,64 @@ body {
     max(1rem, env(safe-area-inset-right))
     max(1rem, env(safe-area-inset-bottom))
     max(1rem, env(safe-area-inset-left));
+}
+
+.settings-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding:
+    max(1.25rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.settings-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.settings-header p {
+  margin: 0;
+  color: #bdbdbd;
+  font-size: 0.9rem;
+}
+
+.settings-field {
+  display: grid;
+  gap: 0.55rem;
+  font-weight: 600;
+}
+
+.settings-select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem;
+  border: 1px solid #777;
+  border-radius: 0.25rem;
+  background: #151515;
+  color: #fff;
+  font: inherit;
+}
+
+.settings-status {
+  min-height: 1.4em;
+  margin: 0;
+  color: #bdbdbd;
+  font-size: 0.9rem;
+}
+
+.settings-actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.button-danger {
+  border-color: #d33;
+  background: #b21f2d;
+  color: #fff;
 }
 
 .results-header h1 {
