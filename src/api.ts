@@ -8,8 +8,8 @@ export type { ExtractedQuestion, ExtractedQuestions } from "../shared/types";
 const API_KEY_STORAGE = "testyv2-openai-api-key";
 const MODEL_STORAGE = "testyv2-openai-model";
 export const OPENAI_MODEL_OPTIONS = [
-  { value: "gpt-4.1", label: "GPT-4.1 — dokładniejszy" },
-  { value: "gpt-4.1-mini", label: "GPT-4.1 mini — szybszy i tańszy" },
+  { value: "gpt-6-luna", label: "GPT-6 Luna" },
+  { value: "gpt-4o-mini", label: "GPT-4o mini" },
 ] as const;
 export type OpenAIModel = (typeof OPENAI_MODEL_OPTIONS)[number]["value"];
 
@@ -20,9 +20,9 @@ function isOpenAIModel(value: string | null): value is OpenAIModel {
 function readStoredModel(): OpenAIModel {
   try {
     const storedModel = localStorage.getItem(MODEL_STORAGE);
-    return isOpenAIModel(storedModel) ? storedModel : "gpt-4.1";
+    return isOpenAIModel(storedModel) ? storedModel : "gpt-6-luna";
   } catch {
-    return "gpt-4.1";
+    return "gpt-6-luna";
   }
 }
 
