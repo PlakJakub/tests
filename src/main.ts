@@ -240,16 +240,6 @@ function requestNotificationPermission(): Promise<NotificationPermission | "unsu
   });
 }
 
-function formatQuestionForNotification(question: DisplayedQuestion): string {
-  const title = `${String(question.id)} · ${question.question.trim().slice(0, 4)} — ${question.question}`;
-  const options = (["a", "b", "c", "d"] as const)
-    .map((letter) => `${letter.toUpperCase()}. ${question[letter] || "(brak odczytanej odpowiedzi)"}`)
-    .join("\n");
-  const solution = question.answer ? `\nPoprawna odpowiedź: ${question.answer}` : "";
-  const reason = question.reason ? `\n${question.reason}` : "";
-  return `${title}\n${options}${solution}${reason}`;
-}
-
 async function sendResultsNotification(
   questions: DisplayedQuestion[],
   permissionPromise: Promise<NotificationPermission | "unsupported">,
@@ -261,7 +251,10 @@ async function sendResultsNotification(
 
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification("Wyniki odczytu zdjęć", {
-    body: questions.map(formatQuestionForNotification).join("\n\n"),
+    body: questions
+      .filter((question) => typeof question.id === "number" && question.solved && question.answer)
+      .map((question) => `${String(question.id)} · ${question.question.trim().slice(0, 4)}: ${question.answer}`)
+      .join("\n"),
     tag: "testyv2-questions",
   });
   return true;
@@ -287,7 +280,7 @@ async function processCapturedPhoto(
     try {
       const sent = await sendResultsNotification(extractedQuestions, permissionPromise);
       processingMessage = sent
-        ? "Zdjęcie przetworzone. Wysłano powiadomienie z pełną listą odpowiedzi."
+        ? "Zdjęcie przetworzone. Wysłano powiadomienie z poprawnymi odpowiedziami."
         : "Zdjęcie przetworzone. Powiadomienie wymaga zgody przeglądarki.";
     } catch (error) {
       console.error("Nie udało się wysłać powiadomienia z wynikami.", error);
