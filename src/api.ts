@@ -193,7 +193,7 @@ export async function extractQuestionsFromPhoto(
       return [];
     }
     const response = await client.responses.create({
-      model: getSelectedModel(),
+      model: "gpt-4.1",
       input: [
         {
           role: "user",

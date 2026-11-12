@@ -7,6 +7,13 @@ const answerLabels = {
   d: /^\s*(?:\*\*)?D\s*[).:\-–]\s*(?:\*\*)?/i,
 } as const;
 
+function stripLeadingNumberPrefix(text: string): string {
+  return text
+    .replace(/^\s*(?:#{1,6}\s*)?(?:\*\*)?(\d{1,4})\s*[.)]\s*(?:\*\*)?/i, "")
+    .replace(/^\s*(?:\*\*)?[A-D]\s*[).:\-–]\s*(?:\*\*)?/i, "")
+    .trim();
+}
+
 function normalizeAnswer(
   answer: string,
   label: keyof typeof answerLabels,
@@ -23,7 +30,7 @@ export function normalizeQuestionText(text: string): string {
     return "";
   }
 
-  let normalized = text
+  let normalized = stripLeadingNumberPrefix(text)
     .normalize("NFKC")
     .replace(/[\u00A0\u2000-\u200F\u202F\u205F]/g, " ")
     .replace(/[\u2010-\u2015\u2212]/g, "-")
@@ -48,10 +55,7 @@ function normalizeQuestion(question: ExtractedQuestion): ExtractedQuestion {
   const prefix = question.question.match(
     /^\s*(?:#{1,6}\s*)?(?:\*\*)?(\d{1,4})\s*[.)]\s*(?:\*\*)?\s*/,
   );
-  const text = question.question
-    .replace(/^\s*#{1,6}\s*/, "")
-    .replace(/^\s*(?:\*\*)?(\d{1,4})\s*[.)]\s*(?:\*\*)?\s*/, "")
-    .trim();
+  const text = stripLeadingNumberPrefix(question.question);
 
   return {
     id: prefix ? Number(prefix[1]) : question.id,
